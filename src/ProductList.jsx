@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import './ProductList.css'
 import CartItem from './CartItem';
+import { addItem } from './CartSlice'
+import CartSlice from './CartSlice';
+import { useDispatch, useSelector } from 'react-redux';
+
+//This imports the useEffect hook from React.
+//useEffect is used to run side-effects after render, such as fetching data, updating local state when props change, or syncing with an external store like Redux.
+
+
 function ProductList({ onHomeClick }) {
+    //Initialize the cart items state in the Redux store.
+    const cartItems = useSelector(state => state.cart.items);
+    const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
+    const dispatch = useDispatch();
+
     const [showCart, setShowCart] = useState(false);
     const [showPlants, setShowPlants] = useState(false); // State to control the visibility of the About Us page
-
+    const [addedToCart, setAddedToCart] = useState({});
     const plantsArray = [
         {
             category: "Air Purifying Plants",
@@ -252,6 +266,37 @@ function ProductList({ onHomeClick }) {
         e.preventDefault();
         setShowCart(false);
     };
+
+    //This useEffect runs every time the cart changes (add, remove, update).
+
+    //React compares cart in the dependency array and triggers this function if it detects a change.
+    
+    useEffect(() => {
+        const updatedState = {};
+        cartItems.forEach(item => {
+          updatedState[item.name] = true;
+        });
+      //This updates your local React state (addedToCart) to reflect the current items in the cart.
+
+    //That way, if an item is removed from the cart in Redux, it also resets the button state in your component (enabling the "Add to Cart" button again).
+        setAddedToCart(updatedState);
+        //This is the dependency array of the useEffect hook. 
+        //Only do this when the shopping cart has changed — not on every render.
+      }, [cartItems]);
+      
+
+  const handleAddToCart = (plant) => {
+    // The state of plants is managed in CartSlice
+    dispatch(addItem(plant))
+    setAddedToCart((prevState) => ({
+        ...prevState,
+        [plant.name]: true, // Set the product name as key and value as true to indicate it's added to cart
+      }));
+
+    //This is called computed property name syntax in JavaScript. It’s used when you want to dynamically create or update an object key based on a variable's value.
+    //Because product.name is dynamic. You may have multiple products (e.g., "iPhone", "Shoes", "Laptop") and you want to track which ones are added to the cart, keyed by their name.
+};
+
     return (
         <div>
             <div className="navbar" style={styleObj}>
@@ -269,14 +314,98 @@ function ProductList({ onHomeClick }) {
                 </div>
                 <div style={styleObjUl}>
                     <div> <a href="#" onClick={(e) => handlePlantsClick(e)} style={styleA}>Plants</a></div>
-                    <div> <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}><h1 className='cart'><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" id="IconChangeColor" height="68" width="68"><rect width="156" height="156" fill="none"></rect><circle cx="80" cy="216" r="12"></circle><circle cx="184" cy="216" r="12"></circle><path d="M42.3,72H221.7l-26.4,92.4A15.9,15.9,0,0,1,179.9,176H84.1a15.9,15.9,0,0,1-15.4-11.6L32.5,37.8A8,8,0,0,0,24.8,32H8" fill="none" stroke="#faf9f9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" id="mainIconPathAttribute"></path></svg></h1></a></div>
+                    {/*<div> <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}><h1 className='cart'>{ }<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" id="IconChangeColor" height="68" width="68"><rect width="156" height="156" fill="none"></rect><circle cx="80" cy="216" r="12"></circle><circle cx="184" cy="216" r="12"></circle><path d="M42.3,72H221.7l-26.4,92.4A15.9,15.9,0,0,1,179.9,176H84.1a15.9,15.9,0,0,1-15.4-11.6L32.5,37.8A8,8,0,0,0,24.8,32H8" fill="none" stroke="#faf9f9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" id="mainIconPathAttribute"></path></svg></h1></a></div>*/}
+                    <div style={{ position: 'relative' }}>
+  <a href="#" onClick={(e) => handleCartClick(e)} style={styleA}>
+    <h1 className='cart'>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" height="68" width="68">
+        <rect width="156" height="156" fill="none"></rect>
+        <circle cx="80" cy="216" r="12"></circle>
+        <circle cx="184" cy="216" r="12"></circle>
+        <path d="M42.3,72H221.7l-26.4,92.4A15.9,15.9,0,0,1,179.9,176H84.1a15.9,15.9,0,0,1-15.4-11.6L32.5,37.8A8,8,0,0,0,24.8,32H8" 
+          fill="none" 
+          stroke="#faf9f9" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          strokeWidth="2">
+        </path>
+      </svg>
+
+      {/* Show count always, even 0 */}
+      <span style={{
+        position: 'absolute',
+        top: '0',
+        right: '0',
+        background: 'red',
+        color: 'white',
+        borderRadius: '50%',
+        padding: '4px 8px',
+        fontSize: '12px',
+      }}>
+        {totalItems}
+      </span>
+    </h1>
+  </a>
+</div>
                 </div>
             </div>
             {!showCart ? (
+                
                 <div className="product-grid">
+                
+                {/* Loop through each category in the plantsArray (e.g., 'Indoor Plants', 'Outdoor Plants') */}
+
+                {plantsArray.map((category, categoryIndex) => (
+
+                  // Use categoryIndex as the key (not ideal for dynamic lists, but fine if the data doesn't change)
+                  <div key={categoryIndex}>
+                    <br></br>
+                    {/* Display the category name as a section header */}
+                    <h1 className="product-title" align="center">{category.category}</h1>
+              
+                    {/* Container to hold all plants under this category */}
+                    
+                    <div className="product-list">
+                      {/* Loop through each plant in the current category */}
+                      {category.plants.map((plant, plantIndex) => (
+                        // Unique key for each plant (again, better if you have a unique ID)
+                        <div key={plantIndex} className="product-card">
+                        
+                          {/* Display plant name */}
+                          <h3 className="product-title">{plant.name}</h3>
+
+                          {/* Display plant image */}
+                          <div className="product-image">
+                          <img 
+                            src={plant.image}            // Image URL from the plant object
+                            alt={plant.name}             // Alternative text for accessibility
+                            className="product-image"      // CSS class for styling the image
+                          />
+                          </div>
+                          
+              
+                          {/* Display short description of the plant */}
+                          <p className="plant-description">{plant.description}</p>
+              
+                          {/* Display the cost/price of the plant */}
+                          <p className="product-price">{plant.cost}</p>
+                          <button
+  className={addedToCart[plant.name] ? "product-button.added-to-cart" : "product-button"}
+  onClick={() => handleAddToCart(plant)}
+  disabled={addedToCart[plant.name]}
+>
+  {addedToCart[plant.name] ? 'Added to Cart' : 'Add to Cart'}
+</button>
 
 
-                </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                
+              </div>
+              
             ) : (
                 <CartItem onContinueShopping={handleContinueShopping} />
             )}

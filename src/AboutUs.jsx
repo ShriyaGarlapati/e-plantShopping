@@ -1,6 +1,6 @@
 import React from 'react';
 import './AboutUs.css';
-
+import { useDispatch, useSelector } from 'react-redux';
 function AboutUs() {
   return (
     <div className="about-us-container">
